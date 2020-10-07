@@ -152,8 +152,6 @@
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)\profiles\*.xml" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
-    <CustomBuildStep />
-    <CustomBuildStep />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -176,8 +174,6 @@
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)\profiles\*.xml" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
-    <CustomBuildStep />
-    <CustomBuildStep />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -196,8 +192,6 @@
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)\profiles\*.xml" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
-    <CustomBuildStep />
-    <CustomBuildStep />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -220,8 +214,6 @@
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)\profiles\*.xml" "$(TargetDir)" /y</Command>
     </PostBuildEvent>
-    <CustomBuildStep />
-    <CustomBuildStep />
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
