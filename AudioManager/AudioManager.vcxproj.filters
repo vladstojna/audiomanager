@@ -128,8 +128,4 @@
       <Filter>Header Files</Filter>
     </Xsd>
   </ItemGroup>
-  <ItemGroup>
-    <Xml Include="profile-example.xml" />
-    <Xml Include="profile.xml" />
-  </ItemGroup>
 </Project>
