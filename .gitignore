@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Ignore all XML configs except the example
+*.xml
+!profile-example.xml
+
 # User-specific files
 *.rsuser
 *.suo

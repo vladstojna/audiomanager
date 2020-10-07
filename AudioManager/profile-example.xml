@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<profile>
+
+	<global>
+		<action status="176" controller="7">VolumeSet</action>
+		<action status="176" controller="55">VolumeMute</action>
+		<action status="176" controller="43">PrevTrack</action>
+		<action status="176" controller="44">NextTrack</action>
+		<action status="176" controller="41">PlayPause</action>
+	</global>
+
+	<session>
+		<paths>
+			<path>C:\my\dir</path>
+			<path>D:\games</path>
+		</paths>
+		<actions>
+			<action status="176" controller="0">VolumeSet</action>
+			<action status="176" controller="48">VolumeMute</action>
+		</actions>
+	</session>
+
+	<session>
+		<paths>
+			<path>musicplayer.exe</path>
+		</paths>
+		<actions>
+			<action status="176" controller="1">VolumeSet</action>
+			<action status="176" controller="49">VolumeMute</action>
+		</actions>
+	</session>
+
+	<session>
+		<paths>
+			<path>browser.exe</path>
+		</paths>
+		<actions>
+			<action status="176" controller="2">VolumeSet</action>
+			<action status="176" controller="50">VolumeMute</action>
+		</actions>
+	</session>
+
+	<session>
+		<paths>
+			<path>videoplayer.exe</path>
+		</paths>
+		<actions>
+			<action status="176" controller="5">VolumeSet</action>
+			<action status="176" controller="53">VolumeMute</action>
+		</actions>
+	</session>
+
+</profile>

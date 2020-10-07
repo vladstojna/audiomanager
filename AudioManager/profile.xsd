@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="profile"
+    targetNamespace="http://tempuri.org/profile.xsd"
+    elementFormDefault="qualified"
+    xmlns="http://tempuri.org/profile.xsd"
+    xmlns:mstns="http://tempuri.org/profile.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+>
+
+	<xs:simpleType name="globalActionName">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="VolumeSet"/>
+			<xs:enumeration value="VolumeMute"/>
+			<xs:enumeration value="PrevTrack"/>
+			<xs:enumeration value="NextTrack"/>
+			<xs:enumeration value="PlayPause"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="sessionActionName">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="VolumeSet"/>
+			<xs:enumeration value="VolumeMute"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="midiValue">
+		<xs:restriction base="xs:unsignedByte"/>
+	</xs:simpleType>
+
+	<xs:complexType name="actionTypeGlobal">
+		<xs:simpleContent>
+			<xs:extension base="globalActionName">
+				<xs:attribute name="status" type="midiValue"/>
+				<xs:attribute name="controller" type="midiValue"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+
+	<xs:complexType name="actionTypeSession">
+		<xs:simpleContent>
+			<xs:extension base="sessionActionName">
+				<xs:attribute name="status" type="midiValue"/>
+				<xs:attribute name="controller" type="midiValue"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+
+	<xs:element name="profile">
+		<xs:complexType>
+			<xs:sequence>
+
+				<xs:element name="global" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="action" type="actionTypeGlobal"
+							maxOccurs="unbounded"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+
+				<xs:element name="session" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="paths">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="path" type="xs:anyURI"
+										maxOccurs="unbounded"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+
+							<xs:element name="actions">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="action" type="actionTypeSession"
+										maxOccurs="unbounded"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>
