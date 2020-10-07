@@ -89,7 +89,7 @@ manager::AudioManager::AudioManager(const std::string& configPath, const std::ch
     _mapMutex(),
     _cleanupMutex(),
     _cleanupCondition(),
-    _cleanupThread(&AudioManager::PeriodicCleanup, this, cleanupPeriod)
+    _cleanupThread() // start execution when constructor ends
 {
     ParseXmlConfig(configPath);
 
@@ -151,8 +151,8 @@ cleanup:
         throw std::runtime_error("Failed to create audio manager with error code " + std::to_string(GetLastError()));
     }
 
-    // signal the cleanup thread to start
-    _cleanupCondition.notify_one();
+    // start cleanup thread execution
+    _cleanupThread = std::thread(&AudioManager::PeriodicCleanup, this, cleanupPeriod);
 }
 
 manager::AudioManager::~AudioManager()
@@ -385,16 +385,6 @@ void manager::AudioManager::EndCleanup()
 
 void manager::AudioManager::PeriodicCleanup(const std::chrono::seconds& interval)
 {
-    // wait initially until it is signaled to start
-    {
-        std::unique_lock lock(_cleanupMutex);
-        _cleanupCondition.wait(lock);
-        if (_finished)
-        {
-            std::cout << "Cleanup thread not started\n";
-            return;
-        }
-    }
     std::cout << "Started cleanup thread\n";
     while (true)
     {
