@@ -30,10 +30,9 @@ namespace midi
         using InCallback = void(__stdcall*)(HMIDIIN, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
         HMIDIIN _midiDevice;
-        CallbackData& _callbackData;
 
     public:
-        Client(const std::string& deviceName, InCallback callback, CallbackData& data);
+        Client(const std::string& deviceName, InCallback callback, CallbackData* data);
         ~Client();
 
         Client(const Client& other) = delete;

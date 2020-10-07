@@ -57,9 +57,8 @@ midi::ClientException::ClientException(const char* msg) :
 }
 
 
-midi::Client::Client(const std::string& deviceName, InCallback callback, CallbackData& data) :
-    _midiDevice(nullptr),
-    _callbackData(data)
+midi::Client::Client(const std::string& deviceName, InCallback callback, CallbackData* data) :
+    _midiDevice(nullptr)
 {
     unsigned int midiDeviceNum = midiInGetNumDevs();
     if (midiDeviceNum == 0)
@@ -79,7 +78,7 @@ midi::Client::Client(const std::string& deviceName, InCallback callback, Callbac
         }
     }
 
-    MMRESULT res = midiInOpen(&_midiDevice, midiPort, (DWORD_PTR)callback, (DWORD_PTR)&data, CALLBACK_FUNCTION);
+    MMRESULT res = midiInOpen(&_midiDevice, midiPort, reinterpret_cast<DWORD_PTR>(callback), reinterpret_cast<DWORD_PTR>(data), CALLBACK_FUNCTION);
     if (res != MMSYSERR_NOERROR)
         throw ClientException(fmt::format("midiInOpen: {}", MidiErrorToString(res)));
 
