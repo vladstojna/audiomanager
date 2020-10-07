@@ -34,6 +34,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Midi.cpp" />
     <ClCompile Include="action\SessionVolumeControl.cpp" />
+    <ClCompile Include="MidiCallback.cpp" />
     <ClCompile Include="MidiClient.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +55,7 @@
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Midi.h" />
     <ClInclude Include="action\SessionVolumeControl.h" />
+    <ClInclude Include="MidiCallback.h" />
     <ClInclude Include="MidiClient.h" />
   </ItemGroup>
   <ItemGroup>
@@ -229,9 +231,9 @@
   </Target>
   <Target Name="ProfileClean" AfterTargets="Clean">
     <Message Text="Deleting XML files from $(TargetDir)" Importance="high" />
-      <ItemGroup>
-          <FilesToDelete Include="$(TargetDir)\*.xml" />
-      </ItemGroup>
+    <ItemGroup>
+      <FilesToDelete Include="$(TargetDir)\*.xml" />
+    </ItemGroup>
     <Delete Files="@(FilesToDelete)" ContinueOnError="true" />
   </Target>
 </Project>

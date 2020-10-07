@@ -1,22 +1,14 @@
 #pragma once
 
-#include "AudioManager.h"
-
 #include <combaseapi.h>
 #include <mmeapi.h>
 
-#include <mutex>
 #include <stdexcept>
 
 namespace midi
 {
 
-    struct CallbackData
-    {
-        manager::AudioManager& manager;
-        mutable std::mutex mutex;
-        CallbackData(manager::AudioManager& m);
-    };
+    struct CallbackData;
 
     class ClientException : public std::runtime_error
     {

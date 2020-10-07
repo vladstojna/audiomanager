@@ -39,13 +39,6 @@ std::vector<std::string> GetMidiDeviceNames(UINT midiDeviceCount)
 }
 
 
-midi::CallbackData::CallbackData(manager::AudioManager& m) :
-    manager(m),
-    mutex()
-{
-}
-
-
 midi::ClientException::ClientException(const std::string& msg) :
     std::runtime_error(msg)
 {
