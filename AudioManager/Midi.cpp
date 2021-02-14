@@ -1,39 +1,31 @@
 #include "Midi.h"
 
 #include <iostream>
+#include <iomanip>
 
-// variables related with MIDI protocol to allow for easy
-// conversion between status byte and message acronym
-
-const std::string midi::MidiMessage::MESSAGE_TYPES[] = {"NOn", "NOff", "PA", "CC", "PC", "CA", "PBC"};
-const std::size_t midi::MidiMessage::OFFSET = 0x8;
+// 00 00 00 b1 << 8c -> 00 00 b1 00
+// 00 00 b1 00 | 00 00 00 2d -> 00 00 b1 2d
 
 midi::MidiMessage::MidiMessage(MidiData status, MidiData controller) :
-    _status(status),
-    _controller(controller)
+    _value((status << 8) | controller)
 {
     // empty
 }
 
 midi::MidiMessage::MidiMessage(const std::pair<MidiData, MidiData>& pair) :
-    _status(pair.first),
-    _controller(pair.second)
+    _value((pair.first << 8) | pair.second)
 {
     // empty
 }
 
-// 00 00 00 b1 << 8c -> 00 00 b1 00
-// 00 00 b1 00 | 00 00 00 2d -> 00 00 b1 2d
-
 std::size_t midi::MidiMessage::Hasher::operator()(const MidiMessage& key) const
 {
-    return (key._status << 8) | (key._controller);
+    return key._value;
 }
 
 std::ostream& midi::operator<<(std::ostream& os, const MidiMessage& mm)
 {
-    MidiData messageType = mm._status >> 4;
-    MidiData channel = mm._status & 0xF;
-    os << '[' << midi::MidiMessage::MESSAGE_TYPES[messageType - midi::MidiMessage::OFFSET] << ',' << +channel << ',' << +mm._controller << ']';
-    return os;
+    MidiData statusByte = mm._value >> 8;
+    MidiData secondByte = mm._value & 0xff;
+    return os << std::setw(3) << statusByte << "," << std::left << std::setw(3) << secondByte;
 }

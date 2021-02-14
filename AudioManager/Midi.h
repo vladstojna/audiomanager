@@ -39,13 +39,7 @@ public:
     };
 
 private:
-    // variables related to the MIDI protocol standard to allow for easy
-    // conversion between status byte and message acronym
-    static const std::string MESSAGE_TYPES[];
-    static const std::size_t OFFSET;
-
-    MidiData _status;
-    MidiData _controller;
+    MidiData _value;
 
 public:
     MidiMessage(MidiData status, MidiData controller);
@@ -53,7 +47,7 @@ public:
 
     friend bool operator==(const MidiMessage& lhs, const MidiMessage& rhs)
     {
-        return lhs._status == rhs._status && lhs._controller == rhs._controller;
+        return lhs._value == rhs._value;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const MidiMessage& mm);
