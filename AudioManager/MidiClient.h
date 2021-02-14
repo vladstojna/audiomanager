@@ -1,22 +1,14 @@
 #pragma once
 
-#include "AudioManager.h"
-
 #include <combaseapi.h>
 #include <mmeapi.h>
 
-#include <mutex>
 #include <stdexcept>
 
 namespace midi
 {
 
-    struct CallbackData
-    {
-        manager::AudioManager& manager;
-        mutable std::mutex mutex;
-        CallbackData(manager::AudioManager& m);
-    };
+    struct CallbackData;
 
     class ClientException : public std::runtime_error
     {
@@ -30,10 +22,9 @@ namespace midi
         using InCallback = void(__stdcall*)(HMIDIIN, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
         HMIDIIN _midiDevice;
-        CallbackData& _callbackData;
 
     public:
-        Client(const std::string& deviceName, InCallback callback, CallbackData& data);
+        Client(const std::string& deviceName, InCallback callback, CallbackData* data);
         ~Client();
 
         Client(const Client& other) = delete;

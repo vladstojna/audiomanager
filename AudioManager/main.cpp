@@ -8,6 +8,7 @@
 #include "Helpers.h"
 #include "Macros.h"
 #include "MidiClient.h"
+#include "MidiCallback.h"
 
 #include <fmt/format.h>
 
@@ -16,49 +17,6 @@ void Error(const std::string& msg)
     std::cerr << msg << std::endl;
     std::cout << "Press ENTER to exit" << std::endl;
     std::cin.get();
-}
-
-void HandleDataCallback(const midi::CallbackData& cbData, DWORD_PTR paramData)
-{
-    std::scoped_lock lock(cbData.mutex);
-    midi::MidiData status = paramData & 0xff;
-    midi::MidiData controller = (paramData & 0xff00) >> 8;
-    midi::MidiData value = (paramData & 0xff0000) >> 16;
-    try
-    {
-        cbData.manager.ExecuteAction(midi::MidiMessage(status, controller), value);
-    }
-    catch (const action::ActionError& e)
-    {
-        std::cerr << fmt::format("{}: {}\n", helpers::Timestamp(), e.what());
-    }
-}
-
-void __stdcall MidiInCallback(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    switch (wMsg)
-    {
-    case MIM_DATA:
-        HandleDataCallback(*(midi::CallbackData*)dwInstance, dwParam1);
-        break;
-    case MIM_OPEN:
-        std::cout << "MIDI input device opened\n";
-        break;
-    case MIM_CLOSE:
-        std::cout << "MIDI input device closed\n";
-        break;
-    case MIM_ERROR:
-        std::cout << "Invalid MIDI message received\n";
-        break;
-    case MIM_LONGERROR:
-        std::cout << "Invalid/incomplete MIDI system-exclusive message received\n";
-        break;
-    case MIM_LONGDATA:
-        std::cout << "MIDI system-exclusive message received\n";
-        break;
-    default:
-        std::cout << "Other MIDI message received";
-    }
 }
 
 bool ReadInput(const manager::AudioManager& am)
@@ -90,14 +48,27 @@ bool ReadInput(const manager::AudioManager& am)
     }
 }
 
+void InfoMode(const std::string& deviceName)
+{
+    midi::Client client(deviceName, midi::MidiInInfoCallback, nullptr);
+    std::cout << "Press ENTER to exit\n";
+    std::cin.get();
+}
+
+void NormalMode(const std::string& configPath, const std::string& deviceName)
+{
+    bool readResult = true;
+    while (readResult)
+    {
+        manager::AudioManager manager(configPath);
+        midi::CallbackData callbackData(manager);
+        midi::Client client(deviceName, midi::MidiInCallback, &callbackData);
+        readResult = ReadInput(manager);
+    }
+}
+
 int main(int argc, char* argv[])
 {
-    const std::string configPath = argc > 1 ? argv[1] : "profile.xml";
-    const std::string deviceName = argc > 2 ? argv[2] : "nanoKONTROL2";
-
-    std::cout << fmt::format("{}: Profile = {}\n", helpers::Timestamp(), configPath);
-    std::cout << fmt::format("{}: MIDI device = {}\n", helpers::Timestamp(), deviceName);
-
     HRESULT result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(result))
     {
@@ -106,16 +77,19 @@ int main(int argc, char* argv[])
     }
     std::cout << fmt::format("{}: CoInitializeEx\n", helpers::Timestamp());
 
+    const bool infoMode = argc > 1 && (std::strcmp(argv[1], "i") == 0 || std::strcmp(argv[1], "info") == 0);
+    const std::string configPath = argc > 1 ? argv[1] : "profile.xml";
+    const std::string deviceName = argc > 2 ? argv[2] : "nanoKONTROL2";
+
+    if (infoMode)
+        std::cout << fmt::format("{}: Launched in info mode\n", helpers::Timestamp());
+    else
+        std::cout << fmt::format("{}: Profile = {}\n", helpers::Timestamp(), configPath);
+    std::cout << fmt::format("{}: MIDI device = {}\n", helpers::Timestamp(), deviceName);
+
     try
     {
-        bool readResult = true;
-        while (readResult)
-        {
-            manager::AudioManager manager(configPath);
-            midi::CallbackData callbackData(manager);
-            midi::Client client(deviceName, MidiInCallback, callbackData);
-            readResult = ReadInput(manager);
-        }
+        infoMode ? InfoMode(deviceName) : NormalMode(configPath, deviceName);
     }
     catch (const std::exception& e)
     {
