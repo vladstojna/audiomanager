@@ -20,12 +20,12 @@ const std::function<void(DWORD_PTR, DWORD_PTR)> handleNormal = [](DWORD_PTR dwIn
 {
     midi::CallbackData* cbData = reinterpret_cast<midi::CallbackData*>(dwInstance);
     std::scoped_lock lock(cbData->mutex);
-    midi::MidiData status = paramData & 0xff;
-    midi::MidiData controller = (paramData & 0xff00) >> 8;
-    midi::MidiData value = (paramData & 0xff0000) >> 16;
+    midi::MidiData status = static_cast<midi::MidiData>(paramData & 0xff);
+    midi::MidiData controller = static_cast<midi::MidiData>((paramData & 0xff00) >> 8);
+    midi::MidiData value = static_cast<midi::MidiData>((paramData & 0xff0000) >> 16);
     try
     {
-        cbData->manager.ExecuteAction(midi::MidiMessage(status, controller), value);
+        cbData->manager.ExecuteAction(midi::MidiMessage(status, controller, value));
     }
     catch (const action::ActionError& e)
     {

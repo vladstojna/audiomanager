@@ -5,7 +5,10 @@
 #include <combaseapi.h>
 #include <mmeapi.h>
 
-namespace manager { class AudioManager; }
+namespace manager
+{
+    class AudioManager;
+}
 
 namespace midi
 {

@@ -4,7 +4,6 @@
 #include "GlobalVolumeSet.h"
 #include "SessionVolumeMute.h"
 #include "SessionVolumeSet.h"
-#include "../Midi.h"
 
 template<typename T, typename... Args>
 auto CreateGlobalGenerator(Args&&... args)
@@ -32,21 +31,20 @@ constexpr char VOLUME_MUTE[] = "VolumeMute";
 constexpr char VOLUME_SET[] = "VolumeSet";
 
 using namespace action;
-using CondKbAction = ConditionalAction<KeyboardAction>;
 
 const std::unordered_map<std::string, GeneratorT<IAction>> typeMapGlobal =
 {
     {
-        PLAY_PAUSE, CreateGlobalGenerator<CondKbAction>(midi::pred::IsReleased, "Play/Pause", VK_MEDIA_PLAY_PAUSE, KEYEVENTF_EXTENDEDKEY)
+        PLAY_PAUSE, CreateGlobalGenerator<KeyboardAction>("Play/Pause", VK_MEDIA_PLAY_PAUSE, KEYEVENTF_EXTENDEDKEY)
     },
     {
-        PREV_TRACK, CreateGlobalGenerator<CondKbAction>(midi::pred::IsReleased, "PreviousTrack", VK_MEDIA_PREV_TRACK, KEYEVENTF_EXTENDEDKEY)
+        PREV_TRACK, CreateGlobalGenerator<KeyboardAction>("PreviousTrack", VK_MEDIA_PREV_TRACK, KEYEVENTF_EXTENDEDKEY)
     },
     {
-        NEXT_TRACK, CreateGlobalGenerator<CondKbAction>(midi::pred::IsReleased, "NextTrack", VK_MEDIA_NEXT_TRACK, KEYEVENTF_EXTENDEDKEY)
+        NEXT_TRACK, CreateGlobalGenerator<KeyboardAction>("NextTrack", VK_MEDIA_NEXT_TRACK, KEYEVENTF_EXTENDEDKEY)
     },
     {
-        VOLUME_MUTE, CreateGlobalGenerator<CondKbAction>(midi::pred::IsReleased, "GlobalVolumeMute", VK_VOLUME_MUTE, KEYEVENTF_EXTENDEDKEY)
+        VOLUME_MUTE, CreateGlobalGenerator<KeyboardAction>("GlobalVolumeMute", VK_VOLUME_MUTE, KEYEVENTF_EXTENDEDKEY)
     },
     {
         VOLUME_SET, CreateGlobalGenerator<GlobalVolumeSet>()
@@ -58,7 +56,7 @@ const std::unordered_map<std::string, Generator> typeMapSession =
     {
         VOLUME_MUTE, [](const std::string& app, IAudioSessionControl2* session)
             {
-                return std::make_unique<ConditionalAction<SessionVolumeMute>>(midi::pred::IsReleased, app, session);
+                return std::make_unique<SessionVolumeMute>(app, session);
             }
     },
     {
