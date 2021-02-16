@@ -35,7 +35,7 @@ const std::function<void(DWORD_PTR, DWORD_PTR)> handleNormal = [](DWORD_PTR dwIn
 
 const std::function<void(DWORD_PTR, DWORD_PTR)> handleInfo = [](DWORD_PTR dwInstance, DWORD_PTR paramData)
 {
-    std::cout << fmt::format("status={0} (0x{0:x}) second={1} (0x{1:x}) third={2} (0x{2:x})\n",
+    std::cout << fmt::format("first={0} (0x{0:x}) second={1} (0x{1:x}) third={2} (0x{2:x})\n",
         paramData & 0xff, (paramData & 0xff00) >> 8, (paramData & 0xff0000) >> 16);
 };
 

@@ -3,11 +3,11 @@
 <profile>
 
 	<global>
-		<action status="176" controller="7">VolumeSet</action>
-		<action status="176" controller="55">VolumeMute</action>
-		<action status="176" controller="43">PrevTrack</action>
-		<action status="176" controller="44">NextTrack</action>
-		<action status="176" controller="41">PlayPause</action>
+		<action first="176" second="7">VolumeSet</action>
+		<action first="176" second="55" third="0">VolumeMute</action>
+		<action first="176" second="43" third="0">PrevTrack</action>
+		<action first="176" second="44" third="0">NextTrack</action>
+		<action first="176" second="41" third="0">PlayPause</action>
 	</global>
 
 	<session>
@@ -16,8 +16,8 @@
 			<path>D:\games</path>
 		</paths>
 		<actions>
-			<action status="176" controller="0">VolumeSet</action>
-			<action status="176" controller="48">VolumeMute</action>
+			<action first="176" second="0">VolumeSet</action>
+			<action first="176" second="48" third="0">VolumeMute</action>
 		</actions>
 	</session>
 
@@ -26,8 +26,8 @@
 			<path>musicplayer.exe</path>
 		</paths>
 		<actions>
-			<action status="176" controller="1">VolumeSet</action>
-			<action status="176" controller="49">VolumeMute</action>
+			<action first="176" second="1">VolumeSet</action>
+			<action first="176" second="49" third="0">VolumeMute</action>
 		</actions>
 	</session>
 
@@ -36,8 +36,8 @@
 			<path>browser.exe</path>
 		</paths>
 		<actions>
-			<action status="176" controller="2">VolumeSet</action>
-			<action status="176" controller="50">VolumeMute</action>
+			<action first="176" second="2">VolumeSet</action>
+			<action first="176" second="50" third="0">VolumeMute</action>
 		</actions>
 	</session>
 
@@ -46,8 +46,8 @@
 			<path>videoplayer.exe</path>
 		</paths>
 		<actions>
-			<action status="176" controller="5">VolumeSet</action>
-			<action status="176" controller="53">VolumeMute</action>
+			<action first="176" second="5">VolumeSet</action>
+			<action first="176" second="53" third="0">VolumeMute</action>
 		</actions>
 	</session>
 
