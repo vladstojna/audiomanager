@@ -3,13 +3,10 @@
 #include <cstdint>
 #include <iosfwd>
 
-#include "../Midi.h"
-
 namespace action
 {
 
-    using ExecValue = midi::MidiData;
-    constexpr ExecValue MaxValue = midi::MidiValue::Max;
+    using ExecValue = uint8_t;
 
     class IAction
     {

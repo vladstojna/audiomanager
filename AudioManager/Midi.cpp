@@ -1,31 +1,58 @@
 #include "Midi.h"
 
 #include <iostream>
-#include <iomanip>
 
-// 00 00 00 b1 << 8c -> 00 00 b1 00
-// 00 00 b1 00 | 00 00 00 2d -> 00 00 b1 2d
-
-midi::MidiMessage::MidiMessage(MidiData status, MidiData controller) :
-    _value((status << 8) | controller)
+midi::MidiMessage::MidiMessage(MidiData f, MidiData s, MidiData t) :
+    first(f),
+    second(s),
+    third(t)
 {
-    // empty
+    // zero the remaining bytes
+    raw = raw & 0xffffff;
 }
 
-midi::MidiMessage::MidiMessage(const std::pair<MidiData, MidiData>& pair) :
-    _value((pair.first << 8) | pair.second)
+bool midi::MidiMessage::IsMultiValue() const
 {
-    // empty
+    return third == 0xff;
 }
 
-std::size_t midi::MidiMessage::Hasher::operator()(const MidiMessage& key) const
+// Hash and Equality specialisations
+
+std::size_t midi::MidiMessage::FullHash::operator()(const MidiMessage& key) const
 {
-    return key._value;
+    return key.raw;
+}
+
+std::size_t midi::MidiMessage::PartialHash::operator()(const MidiMessage& key) const
+{
+    // only the first two bytes of a message are relevant
+    return key.raw >> 8;
+}
+
+bool midi::MidiMessage::FullEquality::operator()(const MidiMessage& lhs, const MidiMessage& rhs) const
+{
+    return lhs.raw == rhs.raw;
+}
+
+bool midi::MidiMessage::PartialEquality::operator()(const MidiMessage& lhs, const MidiMessage& rhs) const
+{
+    // only the first two bytes of a message are relevant
+    return (lhs.raw >> 8) == (rhs.raw >> 8);
 }
 
 std::ostream& midi::operator<<(std::ostream& os, const MidiMessage& mm)
 {
-    MidiData statusByte = mm._value >> 8;
-    MidiData secondByte = mm._value & 0xff;
-    return os << std::setw(3) << statusByte << "," << std::left << std::setw(3) << secondByte;
+    os.fill('0');
+    os.width(3);
+    os << static_cast<int>(mm.first) << " ";
+    os.fill('0');
+    os.width(3);
+    os << static_cast<int>(mm.second) << " ";
+    os.fill('0');
+    os.width(3);
+    if (mm.IsMultiValue())
+        os << " - ";
+    else
+        os << static_cast<int>(mm.third);
+    return os;
 }

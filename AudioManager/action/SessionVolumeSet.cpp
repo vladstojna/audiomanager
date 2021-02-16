@@ -1,6 +1,7 @@
 #include "SessionVolumeSet.h"
 #include "ActionError.h"
 #include "../Macros.h"
+#include "../Midi.h"
 
 #include <Audioclient.h>
 
@@ -15,7 +16,7 @@ action::SessionVolumeSet::SessionVolumeSet(const std::string& application, IAudi
 
 void action::SessionVolumeSet::Execute(ExecValue value)
 {
-    float volume = static_cast<float>(value) / MaxValue;
+    float volume = static_cast<float>(value) / midi::MidiValue::Max;
     HRESULT res = GetSimpleAudioVolume()->SetMasterVolume(volume, nullptr);
     if (FAILED(res))
         throw ActionError(fmt::format("Failed to set session volume (error code {})", res));

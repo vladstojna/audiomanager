@@ -15,17 +15,14 @@ action::SessionVolumeMute::SessionVolumeMute(const std::string& application, IAu
 
 void action::SessionVolumeMute::Execute(ExecValue value)
 {
-    if (value == 0)
-    {
-        BOOL muted;
-        HRESULT res = GetSimpleAudioVolume()->GetMute(&muted);
-        if (FAILED(res))
-            throw ActionError(fmt::format("Failed to get session mute state (error code {})", res));
-        res = GetSimpleAudioVolume()->SetMute(!muted, nullptr);
-        if (FAILED(res))
-            throw ActionError(fmt::format("Failed to set session mute state (error code {})", res));
-        DBG(std::cout << GetApplication() << " -> " << (muted ? "unmuted\n" : "muted\n"));
-    }
+    BOOL muted;
+    HRESULT res = GetSimpleAudioVolume()->GetMute(&muted);
+    if (FAILED(res))
+        throw ActionError(fmt::format("Failed to get session mute state (error code {})", res));
+    res = GetSimpleAudioVolume()->SetMute(!muted, nullptr);
+    if (FAILED(res))
+        throw ActionError(fmt::format("Failed to set session mute state (error code {})", res));
+    DBG(std::cout << GetApplication() << " -> " << (muted ? "unmuted\n" : "muted\n"));
 }
 
 void action::SessionVolumeMute::Print(std::ostream& os) const

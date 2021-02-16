@@ -15,7 +15,7 @@
 
 #include <pugixml.hpp>
 
-// helper functions
+// begin helper functions
 
 static void PrintAudioSessionDetails(IAudioSessionControl2* session)
 {
@@ -75,9 +75,60 @@ static void PrintAudioSessionDetails(IAudioSessionControl2* session)
     CoTaskMemFree(sessionInstanceId);
 }
 
+midi::MidiMessage GetMidiMessageFromAttrs(const pugi::xml_node& action)
+{
+    // first and second attributes are required
+    midi::MidiData firstByte = static_cast<midi::MidiData>(action.attribute("first").as_uint());
+    midi::MidiData secondByte = static_cast<midi::MidiData>(action.attribute("second").as_uint());
+
+    // if no third attribute defined - use as multi-input message, i.e., knob or fader
+    pugi::xml_attribute thirdAttribute = action.attribute("third");
+    if (!thirdAttribute)
+        return midi::MidiMessage(firstByte, secondByte);
+    // if third attribute defined - use as single-input message, i.e., button press
+    else
+        return midi::MidiMessage(firstByte, secondByte, static_cast<midi::MidiData>(thirdAttribute.as_uint()));
+}
+
+template<typename Hash, typename Eq>
+void GeneralExpiredSessionErasure(std::unordered_multimap<midi::MidiMessage, std::unique_ptr<action::IAction>, Hash, Eq>& mapping)
+{
+    for (auto it = mapping.begin(); it != mapping.end(); /* nothing */)
+    {
+        // TODO handle Expired() exception
+        if (it->second->Expired())
+        {
+            std::cout << "Erased " << *it->second << '\n';
+            it = mapping.erase(it);
+        }
+        else
+        {
+            it++;
+        }
+    }
+}
+
+template<typename Hash, typename Eq>
+bool GeneralActionExecution(const std::unordered_multimap<midi::MidiMessage, std::unique_ptr<action::IAction>, Hash, Eq>& mapping, const midi::MidiMessage& inputMsg)
+{
+    using mapIter = typename std::unordered_multimap<midi::MidiMessage, std::unique_ptr<action::IAction>, Hash, Eq>::const_iterator;
+    bool actionExecuted = false;
+    std::pair<mapIter, mapIter> range = mapping.equal_range(inputMsg);
+    for (mapIter it = range.first; it != range.second; it++)
+    {
+        it->second->Execute(inputMsg.third);
+        actionExecuted = true;
+        DBG(std::cout << "executed " << *it->second << "\n");
+    }
+    return actionExecuted;
+}
+
+// end helper functions
+
 manager::AudioManager::AudioManager(const std::string& configPath, const std::chrono::seconds& cleanupPeriod) :
     _pendingMapping(),
-    _activeMapping(),
+    _singleValueMapping(),
+    _multiValueMapping(),
     _sessionManager(nullptr),
     _sessionNotification(new event::AudioSessionNotifier([this](IAudioSessionControl2* session)
         {
@@ -166,17 +217,20 @@ manager::AudioManager::~AudioManager()
     helpers::SafeRelease(&_sessionManager);
 }
 
-void manager::AudioManager::ExecuteAction(const midi::MidiMessage& inputMessage, midi::MidiData midiValue) const
+void manager::AudioManager::ExecuteAction(const midi::MidiMessage& inputMessage) const
 {
-    using mapIter = decltype(_activeMapping)::const_iterator;
-
     std::scoped_lock lock(_mapMutex);
-    std::pair<mapIter, mapIter> range = _activeMapping.equal_range(inputMessage);
-    for (mapIter it = range.first; it != range.second; it++)
-    {
-        it->second->Execute(midiValue);
-        DBG(std::cout << "executed " << *it->second << "\n");
-    }
+    // if no elements found in multi-value map, try single-value map
+    if (!GeneralActionExecution(_multiValueMapping, inputMessage))
+        GeneralActionExecution(_singleValueMapping, inputMessage);
+}
+
+void manager::AudioManager::EmplaceActiveMapping(const midi::MidiMessage& msg, std::unique_ptr<action::IAction>&& action)
+{
+    if (msg.IsMultiValue())
+        _multiValueMapping.emplace(msg, std::move(action));
+    else
+        _singleValueMapping.emplace(msg, std::move(action));
 }
 
 void manager::AudioManager::ParseXmlConfig(const std::string& configPath)
@@ -195,10 +249,8 @@ void manager::AudioManager::ParseXmlConfig(const std::string& configPath)
     // iterate 'global' children
     for (pugi::xml_node action = node.first_child(); action; action = action.next_sibling())
     {
-        _activeMapping.emplace(
-            midi::MidiMessage(action.attribute("status").as_uint(), action.attribute("controller").as_uint()),
-            action::GetGlobalAction(action.child_value())
-        );
+        midi::MidiMessage msg = GetMidiMessageFromAttrs(action);
+        EmplaceActiveMapping(msg, action::GetGlobalAction(action.child_value()));
     }
 
     // iterate over 'session' nodes
@@ -213,26 +265,18 @@ void manager::AudioManager::ParseXmlConfig(const std::string& configPath)
         {
             std::filesystem::path fsPath(path.child_value());
             if (std::filesystem::is_directory(fsPath))
-            {
                 helpers::FindFilesRecursively(executables, fsPath, ".exe");
-            }
             else
-            {
                 executables.emplace(fsPath.filename().string());
-            }
         }
 
         // iterate 'actions'
         for (pugi::xml_node action = paths.next_sibling().first_child(); action; action = action.next_sibling())
         {
-            midi::MidiMessage msg(action.attribute("status").as_uint(), action.attribute("controller").as_uint());
+            midi::MidiMessage msg = GetMidiMessageFromAttrs(action);
             for (auto const& exec : executables)
-            {
-                _pendingMapping.emplace(
-                    exec,
-                    std::pair(msg, action::GetGenerator(action.child_value()))
-                );
-            }
+                _pendingMapping.emplace(exec,
+                    std::make_pair(msg, action::GetGenerator(action.child_value())));
         }
     }
 }
@@ -294,18 +338,18 @@ std::string manager::AudioManager::MatchSessionWithApp(IAudioSessionControl2* se
 void manager::AudioManager::OnNewAudioSessionCreated(IAudioSessionControl2* session)
 {
     const std::string match = MatchSessionWithApp(session);
-    if (!match.empty())
-    {
-        std::cout << "New audio session created for '" << match << "'\n";
-        using MapIter = decltype(_pendingMapping)::const_iterator;
+    if (match.empty())
+        return;
 
-        std::scoped_lock lock(_mapMutex);
-        std::pair<MapIter, MapIter> range = _pendingMapping.equal_range(match);
-        for (MapIter it = range.first; it != range.second; it++)
-        {
-            const auto& [message, generator] = it->second;
-            _activeMapping.emplace(message, generator(match, session));
-        }
+    std::cout << "New audio session created for '" << match << "'\n";
+    using MapIter = decltype(_pendingMapping)::const_iterator;
+
+    std::scoped_lock lock(_mapMutex);
+    std::pair<MapIter, MapIter> range = _pendingMapping.equal_range(match);
+    for (MapIter it = range.first; it != range.second; it++)
+    {
+        const auto& [message, generator] = it->second;
+        EmplaceActiveMapping(message, generator(match, session));
     }
 }
 
@@ -356,21 +400,10 @@ cleanup:
 
 void manager::AudioManager::EraseExpiredSessions()
 {
-    DBG(std::cout << "Erasing expired audio sessions...\n");
+    std::cout << "Erasing expired audio sessions...\n";
     std::scoped_lock lock(_mapMutex);
-    for (auto it = _activeMapping.begin(); it != _activeMapping.end(); /* nothing */)
-    {
-        // TODO handle Expired() exception
-        if (it->second->Expired())
-        {
-            DBG(std::cout << "Erased " << *it->second << '\n');
-            it = _activeMapping.erase(it);
-        }
-        else
-        {
-            it++;
-        }
-    }
+    GeneralExpiredSessionErasure(_singleValueMapping);
+    GeneralExpiredSessionErasure(_multiValueMapping);
 }
 
 void manager::AudioManager::EndCleanup()
@@ -403,13 +436,11 @@ std::ostream& manager::operator<<(std::ostream& os, const AudioManager& am)
 {
     os << "*** Registered Apps (" << am._pendingMapping.size() << ") ***\n";
     for (auto const& [key, value] : am._pendingMapping)
-    {
         os << key << " : " << value.first << '\n';
-    }
-    os << "*** Active Mapping (" << am._activeMapping.size() << ") ***\n";
-    for (auto const& [key, value] : am._activeMapping)
-    {
+    os << "*** Active Mapping (" << am._singleValueMapping.size() + am._multiValueMapping.size() << ") ***\n";
+    for (auto const& [key, value] : am._singleValueMapping)
         os << key << " : " << *value << '\n';
-    }
+    for (auto const& [key, value] : am._multiValueMapping)
+        os << key << " : " << *value << '\n';
     return os;
 }

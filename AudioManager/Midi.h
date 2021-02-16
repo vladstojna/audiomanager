@@ -7,50 +7,50 @@
 namespace midi
 {
 
-using MidiData = uint32_t;
+using MidiData = uint8_t;
 
 enum MidiValue
 {
-    Released = 0,
-    Pressed = 127,
-    Min = Released,
-    Max = Pressed
+    Min = 0,
+    Max = 127
 };
 
-namespace pred
+struct MidiMessage
 {
-    template<MidiData value>
-    constexpr bool IsValue(MidiData input) { return value == input; }
-
-    constexpr auto IsReleased = IsValue<0>;
-    constexpr auto IsPressed = IsValue<127>;
-}
-
-// message types are 8n, 9n, An, Bn, Cn, Dn, En where n is the channel number between 0 and 15
-// 8 different message types
-
-class MidiMessage
-{
-public:
-
-    struct Hasher
+    struct FullHash
     {
         std::size_t operator()(const MidiMessage& key) const;
     };
 
-private:
-    MidiData _value;
-
-public:
-    MidiMessage(MidiData status, MidiData controller);
-    MidiMessage(const std::pair<MidiData, MidiData>& pair);
-
-    friend bool operator==(const MidiMessage& lhs, const MidiMessage& rhs)
+    struct FullEquality
     {
-        return lhs._value == rhs._value;
-    }
+        bool operator()(const MidiMessage& lhs, const MidiMessage& rhs) const;
+    };
 
-    friend std::ostream& operator<<(std::ostream& os, const MidiMessage& mm);
+    struct PartialHash
+    {
+        std::size_t operator()(const MidiMessage& key) const;
+    };
+
+    struct PartialEquality
+    {
+        bool operator()(const MidiMessage& lhs, const MidiMessage& rhs) const;
+    };
+
+    union
+    {
+        uint32_t raw;
+        struct
+        {
+            MidiData third;
+            MidiData second;
+            MidiData first;
+        };
+    };
+
+    MidiMessage(MidiData first, MidiData second, MidiData third = 0xff);
+
+    bool IsMultiValue() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const MidiMessage& mm);

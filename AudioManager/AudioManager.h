@@ -18,8 +18,21 @@ namespace manager
 class AudioManager
 {
 private:
-    std::unordered_multimap<std::string, std::pair<midi::MidiMessage, action::Generator>> _pendingMapping;
-    std::unordered_multimap<midi::MidiMessage, std::unique_ptr<action::IAction>, midi::MidiMessage::Hasher> _activeMapping;
+    std::unordered_multimap<
+        std::string,
+        std::pair<midi::MidiMessage, action::Generator>> _pendingMapping;
+
+    std::unordered_multimap<
+        midi::MidiMessage,
+        std::unique_ptr<action::IAction>,
+        midi::MidiMessage::FullHash,
+        midi::MidiMessage::FullEquality> _singleValueMapping;
+
+    std::unordered_multimap<
+        midi::MidiMessage,
+        std::unique_ptr<action::IAction>,
+        midi::MidiMessage::PartialHash,
+        midi::MidiMessage::PartialEquality> _multiValueMapping;
 
     IAudioSessionManager2* _sessionManager;
     IAudioSessionNotification* _sessionNotification;
@@ -34,7 +47,7 @@ public:
     AudioManager(const std::string& configPath, const std::chrono::seconds& cleanupPeriod = std::chrono::seconds(600));
     ~AudioManager();
 
-    void ExecuteAction(const midi::MidiMessage& inputMessage, midi::MidiData midiValue) const;
+    void ExecuteAction(const midi::MidiMessage& inputMessage) const;
     void EnumerateAudioSessions() const;
 
     // delete copy constructor and assignment operator
@@ -45,6 +58,7 @@ public:
 
 private:
     std::string MatchSessionWithApp(IAudioSessionControl2* session);
+    void EmplaceActiveMapping(const midi::MidiMessage& msg, std::unique_ptr<action::IAction>&& action);
     void ParseXmlConfig(const std::string& configPath);
     void OnNewAudioSessionCreated(IAudioSessionControl2* session);
     void EraseExpiredSessions();

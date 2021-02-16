@@ -20,12 +20,12 @@ const std::function<void(DWORD_PTR, DWORD_PTR)> handleNormal = [](DWORD_PTR dwIn
 {
     midi::CallbackData* cbData = reinterpret_cast<midi::CallbackData*>(dwInstance);
     std::scoped_lock lock(cbData->mutex);
-    midi::MidiData status = paramData & 0xff;
-    midi::MidiData controller = (paramData & 0xff00) >> 8;
-    midi::MidiData value = (paramData & 0xff0000) >> 16;
+    midi::MidiData status = static_cast<midi::MidiData>(paramData & 0xff);
+    midi::MidiData controller = static_cast<midi::MidiData>((paramData & 0xff00) >> 8);
+    midi::MidiData value = static_cast<midi::MidiData>((paramData & 0xff0000) >> 16);
     try
     {
-        cbData->manager.ExecuteAction(midi::MidiMessage(status, controller), value);
+        cbData->manager.ExecuteAction(midi::MidiMessage(status, controller, value));
     }
     catch (const action::ActionError& e)
     {
@@ -35,7 +35,7 @@ const std::function<void(DWORD_PTR, DWORD_PTR)> handleNormal = [](DWORD_PTR dwIn
 
 const std::function<void(DWORD_PTR, DWORD_PTR)> handleInfo = [](DWORD_PTR dwInstance, DWORD_PTR paramData)
 {
-    std::cout << fmt::format("status={0} (0x{0:x}) second={1} (0x{1:x}) third={2} (0x{2:x})\n",
+    std::cout << fmt::format("first={0} (0x{0:x}) second={1} (0x{1:x}) third={2} (0x{2:x})\n",
         paramData & 0xff, (paramData & 0xff00) >> 8, (paramData & 0xff0000) >> 16);
 };
 
