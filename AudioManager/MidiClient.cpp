@@ -61,7 +61,7 @@ midi::Client::Client(const std::string& deviceName, InCallback callback, Callbac
 
     std::vector<std::string> devices = GetMidiDeviceNames(midiDeviceNum);
 
-    DWORD midiPort = 0;
+    size_t midiPort = 0;
     for (size_t i = 0; i < devices.size(); i++)
     {
         if (devices[i].find(deviceName) != std::string::npos)

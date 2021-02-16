@@ -1,13 +1,13 @@
 #include "GlobalVolumeSet.h"
+#include "ActionError.h"
+#include "../Helpers.h"
 #include "../Macros.h"
+#include "../Midi.h"
 
 #include <iostream>
 
 #include <endpointvolume.h>
 #include <mmdeviceapi.h>
-
-#include "ActionError.h"
-#include "../Helpers.h"
 
 #include <fmt/format.h>
 
@@ -45,7 +45,7 @@ action::GlobalVolumeSet::~GlobalVolumeSet()
 
 void action::GlobalVolumeSet::Execute(ExecValue value)
 {
-    float volume = static_cast<float>(value) / MaxValue;
+    float volume = static_cast<float>(value) / midi::MidiValue::Max;
     HRESULT res = _endpointVolume->SetMasterVolumeLevelScalar(volume, nullptr);
     if (FAILED(res))
         throw ActionError(fmt::format("Failed to set master volume (error code {})", res));

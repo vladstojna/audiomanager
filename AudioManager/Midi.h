@@ -11,10 +11,8 @@ using MidiData = uint8_t;
 
 enum MidiValue
 {
-    Released = 0,
-    Pressed = 127,
-    Min = Released,
-    Max = Pressed
+    Min = 0,
+    Max = 127
 };
 
 struct MidiMessage
@@ -44,9 +42,9 @@ struct MidiMessage
         uint32_t raw;
         struct
         {
-            uint8_t third;
-            uint8_t second;
-            uint8_t first;
+            MidiData third;
+            MidiData second;
+            MidiData first;
         };
     };
 
